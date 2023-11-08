@@ -8,8 +8,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import csv
 import os
+import tempfile
 
 st.set_option('deprecation.showPyplotGlobalUse', False) #ignore warnings
+
+demo_video = 'demo_video.mp4'
 
 # Load the Producitivity pickle
 with open("productive.pkl", 'rb') as f:
@@ -35,42 +38,25 @@ st.divider()
 
 st.write("Step 2: Upload your video file for processing.")
 
+# use_webcam = st.sidebar.button('Use Webcam')
+
 # File upload widget
 uploaded_video = st.file_uploader("Choose a video...", type=["mp4"])
 
 if uploaded_video is not None:
     st.success("Video is uploaded!")
 
+temp_video = tempfile.NamedTemporaryFile(delete=False)  #initalise
+
 button_process = st.button("Process Video", key="button_process")
 
 # if button is pressed
 if button_process:
-    with st.spinner("Processing..."):    # [KIV] Using a custom, animated spinner
-
-        temp_video_path = "temp.mp4" #tempfile.NamedTemporaryFile(delete=False, suffix=".mp4").name
-            
-        with open(temp_video_path, "wb") as temp_file:
-            temp_file.write(uploaded_video.read())
-
-        # output_video_path = 'videos/output.mp4'#tempfile.NamedTemporaryFile(delete=False, suffix=".mp4").name
-        # annotated_video_path = annotate_video(temp_video_path, output_video_path, model)
-
-        # with open(annotated_video_path, "rb") as video_file:
-        # video_bytes = video_file.read()
-        # st.write(annotated_video_path)
-        # st.video(video_bytes)   
+    with st.spinner("Processing..."):
         
-        # # Create an auto-download button
-        # st.download_button(
-        #     label="Download File",
-        #     data=video_bytes,
-        #     file_name='Annotated Video.mp4',
-
-        # Remove the temporary files (only after all the previous code has completed running)
-        # os.remove(output_video_path)
-
-        # Open webcam
-        cap = cv2.VideoCapture(temp_video_path)
+        temp_video.write(uploaded_video.read())
+        cap = cv2.VideoCapture(temp_video.name)
+            
         fps = cap.get(cv2.CAP_PROP_FPS) # Frames per Second
         
         if "fps" not in st.session_state:
@@ -86,59 +72,59 @@ if button_process:
             pass
 
 
-        # Initiate holistic model
-        with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
-            
-            while cap.isOpened():
-                ret, frame = cap.read()
-
-                # [TEST] For pre-recorded video
-                if not ret:
-                    break  # If there are no more frames to read, break out of the loop
-                
-                frame_counter = frame_counter + 1
-                my_bar.progress(frame_counter/total_frames, text="Processing Video File...")
-
-                # Recolor Feed
-                image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                image.flags.writeable = False        
-                
-                # Make Detections
-                results = holistic.process(image)
-                
-                # Export coordinates
-                try:
-                    # Extract Pose landmarks
-                    pose = results.pose_landmarks.landmark
-                    pose_row = list(np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in pose]).flatten())
-                    
-                    # Extract Face landmarks
-                    face = results.face_landmarks.landmark
-                    face_row = list(np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in face]).flatten())
-                    
-                    # Concatenate rows
-                    row = pose_row + face_row
-                        
-                    # Export to CSV
-                    with open("coords.csv", mode='a', newline='') as f:
-                        csv_writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        csv_writer.writerow(row)
-                
-                except:
-                    pass
-
-                # press q key to terminate webcam capture mode
-                if cv2.waitKey(10) & 0xFF == ord('q'):
-                    
-                    break
-
-        # out.release()
-        cap.release()
-        cv2.destroyAllWindows()
+    # Initiate holistic model
+    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
         
-        os.remove(temp_video_path)  # delete temp file.
+        while cap.isOpened():
+            ret, frame = cap.read()
 
-        st.success("Video is processed!")
+            # [TEST] For pre-recorded video
+            if not ret:
+                break  # If there are no more frames to read, break out of the loop
+            
+            frame_counter = frame_counter + 1
+            my_bar.progress(frame_counter/total_frames, text="Processing Video File...")
+
+            # Recolor Feed
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image.flags.writeable = False        
+            
+            # Make Detections
+            results = holistic.process(image)
+            
+            # Export coordinates
+            try:
+                # Extract Pose landmarks
+                pose = results.pose_landmarks.landmark
+                pose_row = list(np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in pose]).flatten())
+                
+                # Extract Face landmarks
+                face = results.face_landmarks.landmark
+                face_row = list(np.array([[landmark.x, landmark.y, landmark.z, landmark.visibility] for landmark in face]).flatten())
+                
+                # Concatenate rows
+                row = pose_row + face_row
+                    
+                # Export to CSV
+                with open("coords.csv", mode='a', newline='') as f:
+                    csv_writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    csv_writer.writerow(row)
+            
+            except:
+                pass
+
+            # press q key to terminate webcam capture mode
+            if cv2.waitKey(10) & 0xFF == ord('q'):
+                
+                break
+
+    # out.release()
+    cap.release()
+    cv2.destroyAllWindows()
+
+    temp_video.close()
+
+    st.success("Video is processed!")
 
 st.divider()
 
@@ -233,9 +219,8 @@ if button_chat:
         
         from langchain.chat_models import ChatOpenAI
         from langchain.schema.messages import HumanMessage, SystemMessage
-        os.environ['OPENAI_API_KEY'] = "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" # replace with your API key
 
-        chat = ChatOpenAI(model_name="gpt-3.5-turbo",temperature=0.1)
+        chat = ChatOpenAI(model_name="gpt-3.5-turbo",temperature=0.1, openai_api_key=st.secrets.openai_key)
 
         messages = [
             SystemMessage(
