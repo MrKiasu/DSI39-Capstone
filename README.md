@@ -55,7 +55,7 @@ Data is recorded using a webcam at 720p (1280x720), 16:9, 30fps, mp4 format.
 ### Conclusion
 
 - A classification model with good accuracy (> 0.9) and good cross validation score was built to identify whether an user is productive or showing signs of fatigue via video recording.
-- An user-friendly web application () was also built to deploy this model to users, with the addition of a chatbot to provide users tips on managing productivity and their fatigue based on their use case.
+- An user-friendly web application (https://laser-focus.streamlit.app/) was also built to deploy this model to users, with the addition of a chatbot to provide users tips on managing productivity and their fatigue based on their use case.
 
 ---
 
