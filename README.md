@@ -47,7 +47,8 @@ Data is recorded using a webcam at 720p (1280x720), 16:9, 30fps, mp4 format.
 
 * [01_train](/code/01_train.ipynb): Extracing the facial and body landmarks, converting them into coordinates and training a classification model
 * [02_test](/code/02_test.ipynb): Testing the model and building the chatbot
-* [03_deploy](/code/03_deploy.ipynb): Deploying the model and chatbot
+* [03_deploy_local](/code/03_deploy_local_nokey.ipynb): Deploying the model and chatbot on local Streamlit
+* [03_deploy_cloud](/code/03_deploy_cloud.ipynb): Deploying the model and chatbot on cloud Streamlit
 
 ---
 
